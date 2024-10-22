@@ -36,13 +36,37 @@ def add_user():
         db.session.add(newUser)
         db.session.commit()
         return make_response(jsonify({'message':'user added'}),201)
-    except:
+    except e:
         return make_response(jsonify({'message':'Error user adding'}),500)
 
-@app.route('/add', methods=['GET'])
+@app.route('/show', methods=['GET'])
 def show_user():
     try:
         users=User.query.all()
         return make_response(jsonify({'users':[user.json() for user in users]}),201)
-    except:
+    except e:
+        return make_response(jsonify({'message':'Error user fetching'}),500)
+    
+@app.route('/show/<int:id>', methods=['GET'])
+def show_user(id):
+    try:
+        user=User.query.filter_by(id=id).first()
+        if user:
+            return make_response(jsonify({'user':[user.json()]}),201)
+        return make_response(jsonify({'message':'user not founded'}),404)
+    except e:
+        return make_response(jsonify({'message':'Error user fetching'}),500)
+    
+@app.route('/show/<int:id>', methods=['PUT'])
+def edit_user(id):
+    try:
+        user=User.query.filter_by(id=id).first()
+        if user:
+             data=request.get_json()
+             user.username=data['username']
+             user.email=data['email']
+             db.session.commit()
+             return make_response(jsonify({'message':'user founded'}),201)
+        return make_response(jsonify({'message':'user not founded'}),404)
+    except e:
         return make_response(jsonify({'message':'Error user fetching'}),500)
