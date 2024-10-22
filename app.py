@@ -15,11 +15,12 @@ cache = Cache(app)
 limiter = Limiter(
     app,
     key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"]
+    default_limits=[app.config['RATELIMIT_DEFAULT']],
+    storage_uri=app.config['RATELIMIT_STORAGE_URL']
 )
 
 from models import *
 from routes import *
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0')
