@@ -3,6 +3,11 @@ from app import db
 import numpy as np
 from scipy import stats
 from datetime import datetime
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
+import io
 
 def calc_aqi(readings):
     pm25 = np.mean([r.value for r in readings if r.sensor.sensor_type == 'PM2.5'])
@@ -117,3 +122,59 @@ def gen_report(loc):
     """
 
     return report
+
+def pdf_report(loc):
+    aqi = AirQualityIndex.query.filter_by(location=loc).order_by(AirQualityIndex.timestamp.desc()).first()
+    traffic = TrafficDensity.query.filter_by(location=loc).order_by(TrafficDensity.timestamp.desc()).first()
+    noise = NoiseLevel.query.filter_by(location=loc).order_by(NoiseLevel.timestamp.desc()).first()
+    water = WaterQuality.query.filter_by(location=loc).order_by(WaterQuality.timestamp.desc()).first()
+    energy = EnergyConsumption.query.filter_by(location=loc).order_by(EnergyConsumption.timestamp.desc()).first()
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
+    elements = []
+
+    title = Paragraph(f"Daily Report for {loc} - {datetime.now().strftime('%Y-%m-%d')}", styles['Title'])
+    elements.append(title)
+
+    data = [
+        ['Air Quality Index', f"{aqi.aqi:.2f}"],
+        ['PM2.5', f"{aqi.pm25:.2f}"],
+        ['O3', f"{aqi.o3:.2f}"],
+        ['CO', f"{aqi.co:.2f}"],
+        ['NO2', f"{aqi.no2:.2f}"],
+        ['SO2', f"{aqi.so2:.2f}"],
+        ['Traffic Density', f"{traffic.density:.2f}"],
+        ['Vehicle Count', f"{traffic.vehicle_count}"],
+        ['Average Speed', f"{traffic.average_speed:.2f} km/h"],
+        ['Noise Level', f"{noise.decibel:.2f} dB"],
+        ['Water Quality pH', f"{water.ph:.2f}"],
+        ['Water Turbidity', f"{water.turbidity:.2f} NTU"],
+        ['Dissolved Oxygen', f"{water.dissolved_oxygen:.2f} mg/L"],
+        ['Energy Consumption', f"{energy.consumption:.2f} kWh"],
+        ['Renewable Energy', f"{energy.renewable_percentage:.2f}%"]
+    ]
+
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 14),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 12),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+
+    elements.append(table)
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer
