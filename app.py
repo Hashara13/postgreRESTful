@@ -69,4 +69,16 @@ def edit_user(id):
              return make_response(jsonify({'message':'user founded'}),201)
         return make_response(jsonify({'message':'user not founded'}),404)
     except e:
-        return make_response(jsonify({'message':'Error user fetching'}),500)
+        return make_response(jsonify({'message':'Error user updating'}),500)
+
+@app.route('/show/<int:id>', methods=['DELETE'])
+def edit_user(id):
+    try:
+        user=User.query.filter_by(id=id).first()
+        if user:
+             db.session.delete(user)
+             db.session.commit()
+             return make_response(jsonify({'message':'user founded'}),201)
+        return make_response(jsonify({'message':'user not founded'}),404)
+    except e:
+        return make_response(jsonify({'message':'Error user deleting'}),500)
