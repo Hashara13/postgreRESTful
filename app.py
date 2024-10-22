@@ -39,3 +39,10 @@ def add_user():
     except:
         return make_response(jsonify({'message':'Error user adding'}),500)
 
+@app.route('/add', methods=['GET'])
+def show_user():
+    try:
+        users=User.query.all()
+        return make_response(jsonify({'users':[user.json() for user in users]}),201)
+    except:
+        return make_response(jsonify({'message':'Error user fetching'}),500)
