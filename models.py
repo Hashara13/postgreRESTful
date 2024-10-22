@@ -14,3 +14,14 @@ class SensorReading(db.Model):
     value = db.Column(db.Float, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
+class AirQualityIndex(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    location = db.Column(db.String(200), nullable=False)
+    aqi = db.Column(db.Float, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+class TrafficDensity(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    location = db.Column(db.String(200), nullable=False)
+    density = db.Column(db.Float, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
