@@ -1,37 +1,26 @@
-version: '3.9'
+version: '3.8'
 
 services:
-  flask-app:
+  web:
     build: .
-    container_name: my-flask-app
     ports:
       - "5000:5000"
+    env_file:
+      - .env
     environment:
-      - DB_URL=postgresql://user:password@db:5432/mydatabase
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
     depends_on:
       - db
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/run"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
   db:
     image: postgres:13
-    container_name: my-postgres-db-new
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=mydatabase
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d mydatabase"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    ports:
+      - "5432:5432"
 
 volumes:
   postgres_data:
