@@ -53,3 +53,13 @@ class EnergyConsumption(db.Model):
     consumption = db.Column(db.Float, nullable=False)  # in kWh
     renewable_percentage = db.Column(db.Float, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    
+class WeatherData(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    location = db.Column(db.String(200), nullable=False)
+    temperature = db.Column(db.Float, nullable=False)
+    humidity = db.Column(db.Float, nullable=False)
+    wind_speed = db.Column(db.Float, nullable=False)
+    wind_direction = db.Column(db.Float, nullable=False)
+    precipitation = db.Column(db.Float, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
