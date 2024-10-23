@@ -1,4 +1,4 @@
-from models import AirQualityIndex, TrafficData, NoiseLevel, WaterQuality, EnergyConsumption, WeatherData
+from models import AirQualityIndex, TrafficData, NoiseLevel, WaterQuality, EnergyConsumption, WeatherData, NetworkData
 from app import db
 import numpy as np
 from scipy import stats
@@ -101,6 +101,19 @@ def update_weather(loc, readings):
     db.session.add(new_weather)
     db.session.commit()
 
+def calc_network(readings):
+    signal = np.mean([r.value for r in readings if r.sensor.sensor_type == 'signal_strength'])
+    download = np.mean([r.value for r in readings if r.sensor.sensor_type == 'download_speed'])
+    upload = np.mean([r.value for r in readings if r.sensor.sensor_type == 'upload_speed'])
+    latency = np.mean([r.value for r in readings if r.sensor.sensor_type == 'latency'])
+    return signal, download, upload, latency
+
+def update_network(loc, readings):
+    signal, download, upload, latency = calc_network(readings)
+    new_network = NetworkData(location=loc, signal_strength=signal, download_speed=download, upload_speed=upload, latency=latency)
+    db.session.add(new_network)
+    db.session.commit()
+
 def detect_anomalies(readings, sensor_type):
     values = [r.value for r in readings if r.sensor.sensor_type == sensor_type]
     z_scores = stats.zscore(values)
@@ -121,6 +134,7 @@ def gen_report(loc):
     water = WaterQuality.query.filter_by(location=loc).order_by(WaterQuality.timestamp.desc()).first()
     energy = EnergyConsumption.query.filter_by(location=loc).order_by(EnergyConsumption.timestamp.desc()).first()
     weather = WeatherData.query.filter_by(location=loc).order_by(WeatherData.timestamp.desc()).first()
+    network = NetworkData.query.filter_by(location=loc).order_by(NetworkData.timestamp.desc()).first()
 
     report = f"""
     Daily Report for {loc} - {datetime.now().strftime('%Y-%m-%d')}
@@ -140,7 +154,7 @@ def gen_report(loc):
     - Congestion Level: {traffic.congestion_level:.2f}
     
     Noise Level:
-    - Decibel: {noise.decibel:.2f} dB
+    - Decibel: {noise.decibel:.2f} 
     - Frequency: {noise.frequency:.2f} Hz
     
     Water Quality:
@@ -162,6 +176,12 @@ def gen_report(loc):
     - Wind Speed: {weather.wind_speed:.2f} m/s
     - Wind Direction: {weather.wind_direction:.2f}°
     - Precipitation: {weather.precipitation:.2f} mm
+    
+    Network Data:
+    - Signal Strength: {network.signal_strength:.2f} dBm
+    - Download Speed: {network.download_speed:.2f} Mbps
+    - Upload Speed: {network.upload_speed:.2f} Mbps
+    - Latency: {network.latency:.2f} ms
     """
 
     return report
@@ -173,6 +193,7 @@ def pdf_report(loc):
     water = WaterQuality.query.filter_by(location=loc).order_by(WaterQuality.timestamp.desc()).first()
     energy = EnergyConsumption.query.filter_by(location=loc).order_by(EnergyConsumption.timestamp.desc()).first()
     weather = WeatherData.query.filter_by(location=loc).order_by(WeatherData.timestamp.desc()).first()
+    network = NetworkData.query.filter_by(location=loc).order_by(NetworkData.timestamp.desc()).first()
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
@@ -209,7 +230,11 @@ def pdf_report(loc):
         ['Humidity', f"{weather.humidity:.2f}%"],
         ['Wind Speed', f"{weather.wind_speed:.2f} m/s"],
         ['Wind Direction', f"{weather.wind_direction:.2f}°"],
-        ['Precipitation', f"{weather.precipitation:.2f} mm"]
+        ['Precipitation', f"{weather.precipitation:.2f} mm"],
+        ['Signal Strength', f"{network.signal_strength:.2f} dBm"],
+        ['Download Speed', f"{network.download_speed:.2f} Mbps"],
+        ['Upload Speed', f"{network.upload_speed:.2f} Mbps"],
+        ['Network Latency', f"{network.latency:.2f} ms"]
     ]
 
     table = Table(data)

@@ -63,3 +63,12 @@ class WeatherData(db.Model):
     wind_direction = db.Column(db.Float, nullable=False)
     precipitation = db.Column(db.Float, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    
+class NetworkData(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    location = db.Column(db.String(200), nullable=False)
+    signal_strength = db.Column(db.Float, nullable=False) 
+    download_speed = db.Column(db.Float, nullable=False) 
+    upload_speed = db.Column(db.Float, nullable=False) 
+    latency = db.Column(db.Float, nullable=False)  
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
