@@ -22,7 +22,7 @@ limiter = Limiter(
     storage_uri=app.config['RATELIMIT_STORAGE_URL']
 )
 
-@app.route('/data/report/<location>/pdf', methods=['GET'])
+@app.route('/iot/data/report/<location>/pdf', methods=['GET'])
 @limiter.limit("5 per minute")
 def get_pdf_report(location):
     try:
